@@ -1,5 +1,8 @@
 # Student Management System
 
+![image](https://github.com/user-attachments/assets/033d13ce-00d2-425c-a269-f9ef0e9cf9d7)
+
+
 ## Задание
 
 Создать веб-приложение для управления данными о студентах. Приложение должно позволять:
