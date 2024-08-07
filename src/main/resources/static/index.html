@@ -1,10 +1,186 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <title>Student Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 20px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80%;
+            max-width: 1200px;
+        }
+
+        .forms {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .form-container,
+        .student-list-container {
+            background-color: #fff;
+            padding: 20px;
+            margin: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .form-container {
+            width: 300px;
+        }
+
+        .student-list-container {
+            width: 60%;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"],
+        input[type="date"] {
+            width: calc(100% - 10px);
+            padding: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            width: 100%;
+        }
+
+        li {
+            background-color: #fff;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+    </style>
+    <script>
+        async function getStudents() {
+            const response = await fetch('/api/students');
+            const students = await response.json();
+            const studentList = document.getElementById('studentList');
+            studentList.innerHTML = '';
+            students.forEach(student => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <strong>Unique Number:</strong> ${student.uniqueNumber}<br>
+                    <strong>Name:</strong> ${student.firstName} ${student.middleName} ${student.lastName}<br>
+                    <strong>Date of Birth:</strong> ${student.dateOfBirth}<br>
+                    <strong>Group:</strong> ${student.studentGroup}
+                `;
+                studentList.appendChild(li);
+            });
+        }
+
+        async function addStudent() {
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const middleName = document.getElementById('middleName').value;
+            const dateOfBirth = document.getElementById('dateOfBirth').value;
+            const studentGroup = document.getElementById('studentGroup').value;
+            const uniqueNumber = document.getElementById('uniqueNumber').value;
+
+            const student = {
+                firstName,
+                lastName,
+                middleName,
+                dateOfBirth,
+                studentGroup,
+                uniqueNumber
+            };
+
+            await fetch('/api/students', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(student)
+            });
+
+            getStudents();
+        }
+
+        async function deleteStudent() {
+            const uniqueNumber = document.getElementById('uniqueNumberToDelete').value;
+
+            await fetch(`/api/students/${uniqueNumber}`, {
+                method: 'DELETE'
+            });
+
+            getStudents();
+        }
+
+        window.onload = getStudents;
+    </script>
 </head>
 <body>
-$END$
+<div class="container">
+    <h1>Student Management</h1>
+    <div class="forms">
+        <div class="form-container">
+            <h2>Add Student</h2>
+            <form onsubmit="event.preventDefault(); addStudent();">
+                <label>First Name: <input type="text" id="firstName" required></label><br>
+                <label>Last Name: <input type="text" id="lastName" required></label><br>
+                <label>Middle Name: <input type="text" id="middleName" required></label><br>
+                <label>Date of Birth: <input type="date" id="dateOfBirth" required></label><br>
+                <label>Group: <input type="text" id="studentGroup" required></label><br>
+                <label>Unique Number: <input type="text" id="uniqueNumber" required></label><br>
+                <button type="submit">Add</button>
+            </form>
+        </div>
+        <div class="form-container">
+            <h2>Delete Student</h2>
+            <form onsubmit="event.preventDefault(); deleteStudent();">
+                <label>Unique Number: <input type="text" id="uniqueNumberToDelete" required></label>
+                <button type="submit">Delete</button>
+            </form>
+        </div>
+        <div class="student-list-container">
+            <h2>Student List</h2>
+            <ul id="studentList"></ul>
+        </div>
+    </div>
+</div>
 </body>
 </html>
