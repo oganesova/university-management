@@ -1,6 +1,8 @@
 package com.students.universitysystem.controller;
-import com.students.universitysystem.dto.StudentDto;
+
+import com.students.universitysystem.entity.Student;
 import com.students.universitysystem.service.StudentService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,18 +19,25 @@ public class StudentController {
     }
 
     @GetMapping
-    public List<StudentDto> getAllStudents() {
-        return studentService.getAllStudents();
+    public ResponseEntity<List<Student>> getAllStudents() {
+        List<Student> students = studentService.findAll();
+        return new ResponseEntity<>(students, HttpStatus.OK);
     }
 
     @PostMapping
-    public StudentDto addStudent(@RequestBody StudentDto studentDto) {
-        return studentService.addStudent(studentDto);
+    public ResponseEntity<Student> addStudent(@RequestBody Student student) {
+        studentService.save(student);
+        return new ResponseEntity<>(student, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{uniqueNumber}")
-    public ResponseEntity<Void> deleteStudent(@PathVariable String uniqueNumber) {
-        studentService.deleteStudentByUniqueNumber(uniqueNumber);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> deleteStudentByUniqueNumber(@PathVariable String uniqueNumber) {
+        Student student = studentService.findByUniqueNumber(uniqueNumber);
+        if (student != null) {
+            studentService.deleteByUniqueNumber(uniqueNumber);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
     }
 }

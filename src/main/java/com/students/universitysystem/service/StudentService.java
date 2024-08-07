@@ -1,38 +1,65 @@
 package com.students.universitysystem.service;
-
-import com.students.universitysystem.dto.StudentDto;
 import com.students.universitysystem.entity.Student;
 import com.students.universitysystem.repository.StudentRepository;
-import org.springframework.stereotype.Service;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service
-public class StudentService {
+@Repository
+public class StudentService implements StudentRepository {
 
-    private final StudentRepository studentRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    public StudentService(StudentRepository studentRepository) {
-        this.studentRepository = studentRepository;
+    public StudentService(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<StudentDto> getAllStudents() {
-        return studentRepository.findAll().stream()
-                .map(StudentDto::mapEntityToDto)
-                .collect(Collectors.toList());
+    @Override
+    public List<Student> findAll() {
+        String sql = "SELECT * FROM students";
+        return jdbcTemplate.query(sql, (ResultSet rs) -> {
+            List<Student> students = new ArrayList<>();
+            while (rs.next()) {
+                Student student = mapResultSetToStudent(rs);
+                students.add(student);
+            }
+            return students;
+        });
     }
 
-    public StudentDto addStudent(StudentDto studentDto) {
-        Student student = StudentDto.mapDtoToEntity(studentDto);
-        student = studentRepository.save(student);
-        return StudentDto.mapEntityToDto(student);
+    @Override
+    public Student findByUniqueNumber(String uniqueNumber) {
+        String sql = "SELECT * FROM students WHERE unique_number = ?";
+        return jdbcTemplate.queryForObject(sql, new Object[]{uniqueNumber}, (rs, rowNum) -> mapResultSetToStudent(rs));
+    }
+    @Override
+    public void deleteByUniqueNumber(String uniqueNumber) {
+        String sql = "DELETE FROM students WHERE unique_number = ?";
+        jdbcTemplate.update(sql, uniqueNumber);
+    }
+    @Override
+    public void save(Student student) {
+        String sql = "INSERT INTO students (unique_number, first_name, last_name, middle_name, date_of_birth, student_group) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql, student.getUniqueNumber(), student.getFirstName(), student.getLastName(), student.getMiddleName(), student.getDateOfBirth(), student.getStudentGroup());
     }
 
-    public void deleteStudentByUniqueNumber(String uniqueNumber) {
-        Student student = studentRepository.findByUniqueNumber(uniqueNumber);
-        if (student != null) {
-            studentRepository.delete(student);
-        }
+
+    private Student mapResultSetToStudent(ResultSet rs) throws SQLException {
+        Student student = new Student();
+        student.setId(rs.getLong("id"));
+        student.setUniqueNumber(rs.getString("unique_number"));
+        student.setFirstName(rs.getString("first_name"));
+        student.setLastName(rs.getString("last_name"));
+        student.setMiddleName(rs.getString("middle_name"));
+        student.setDateOfBirth(rs.getDate("date_of_birth"));
+        student.setStudentGroup(rs.getString("student_group"));
+        return student;
     }
 }
+
